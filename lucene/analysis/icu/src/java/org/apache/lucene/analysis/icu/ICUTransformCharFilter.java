@@ -72,7 +72,7 @@ public final class ICUTransformCharFilter extends BaseCharFilter {
         }
       }
 
-      int resLen = readAndTransformFromInput();
+      int resLen = readFromIoNormalizeUptoBoundary();
       if (resLen > 0) {
         retLen = outputFromResultBuffer(cbuf, off, len);
         if (retLen > 0) {
@@ -86,14 +86,6 @@ public final class ICUTransformCharFilter extends BaseCharFilter {
     return -1;
   }
 
-  private int readAndTransformFromInput() {
-    if (inputBuffer.length() <= 0) {
-      return 0;
-    }
-
-    int resLen = readFromIoNormalizeUptoBoundary();
-    return resLen;
-  }
   private int readFromIoNormalizeUptoBoundary() {
     // if there's no buffer to normalize, return 0
     if (inputBuffer.length() <= 0) {

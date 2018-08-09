@@ -19,46 +19,46 @@ package org.apache.lucene.analysis.icu;
 
 import java.io.IOException;
 import java.io.Reader;
+import java.io.StringReader;
 
+import com.ibm.icu.text.Normalizer2;
 import com.ibm.icu.text.Transliterator;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.BaseTokenStreamTestCase;
+import org.apache.lucene.analysis.CharFilter;
 import org.apache.lucene.analysis.MockTokenizer;
 
 public class ICUTransformCharFilterTest extends BaseTokenStreamTestCase {
 
   public void testBasicFunctionality() throws Exception {
-//    checkToken(Transliterator.getInstance("Traditional-Simplified"),
-//        "簡化字", new String[] { "简化字" });
-//    checkToken(Transliterator.getInstance("Katakana-Hiragana"),
-//        "ヒラガナ", new String[] { "ひらがな" });
-//    checkToken(Transliterator.getInstance("Fullwidth-Halfwidth"),
-//        "アルアノリウ", new String[] { "ｱﾙｱﾉﾘｳ" });
+    checkToken(Transliterator.getInstance("Traditional-Simplified"),
+        "簡化字", "简化字");
+    checkToken(Transliterator.getInstance("Katakana-Hiragana"),
+        "ヒラガナ", "ひらがな");
+    checkToken(Transliterator.getInstance("Fullwidth-Halfwidth"),
+        "アルアノリウ", "ｱﾙｱﾉﾘｳ");
     checkToken(Transliterator.getInstance("Any-Latin"),
-        "Αλφαβητικός Κατάλογος", new String[] { "Alphabētikós", "Katálogos" });
-//    checkToken(Transliterator.getInstance("NFD; [:Nonspacing Mark:] Remove"),
-//        "Alphabētikós Katálogos", new String[] { "Alphabetikos", "Katalogos" });
-//    checkToken(Transliterator.getInstance("Han-Latin"),
-//        "中国", new String[] { "zhōng", "guó" });
+        "Αλφαβητικός Κατάλογος", "Alphabētikós Katálogos");
+    checkToken(Transliterator.getInstance("NFD; [:Nonspacing Mark:] Remove"),
+        "Alphabētikós Katálogos", "Alphabetikos Katalogos");
+    checkToken(Transliterator.getInstance("Han-Latin"),
+        "中国", "zhōng guó");
   }
 
-  private void checkToken(Transliterator transform, String input, String[] expected) throws IOException {
-    final Analyzer analyzer = buildAnalyzer(transform);
-    assertAnalyzesTo(analyzer, input, expected);
-    analyzer.close();
-  }
+  private void checkToken(Transliterator transform, String input, String expectedOutput) throws IOException {
 
-  public Analyzer buildAnalyzer(final Transliterator transliterator) {
-    return new Analyzer() {
-      @Override
-      protected TokenStreamComponents createComponents(String fieldName) {
-        return new TokenStreamComponents(new MockTokenizer());
+      CharFilter reader = new ICUTransformCharFilter(new StringReader(input), transform);
+      char[] tempBuff = new char[10];
+      StringBuilder output = new StringBuilder();
+      while (true) {
+        int length = reader.read(tempBuff);
+        if (length == -1) {
+          break;
+        }
+        output.append(tempBuff, 0, length);
       }
 
-      @Override
-      protected Reader initReader(String fieldName, Reader reader) {
-        return new ICUTransformCharFilter(reader, transliterator);
-      }
-    };
+      assertEquals(expectedOutput, output.toString());
   }
+
 }
